@@ -1,42 +1,35 @@
 import { URLSearchParams } from 'url';
-import { JsonRequest } from '../request';
+import { JsonRequest } from 'http-req-builder';
+import { definitions, operations } from '../../.temp/types';
+import { AllureStep } from '../../utils/allureStep';
 
 export class PetController {
+  @AllureStep(`[Petcontroller] getById`)
   async getById(id: number | string) {
     return (await new JsonRequest().url(`http://localhost/v2/pet/${id}`).send()).body;
   }
 
+  @AllureStep(`[Petcontroller] findByTags`)
   async findByTags(tags: string | string[]) {
     return (
       await new JsonRequest()
         .url('http://localhost/v2/pet/findByTags')
         .searchParams(new URLSearchParams({ tags }))
-        .send()
+        .send<operations['findPetsByTags']['responses']['200']['schema']>()
     ).body;
   }
-
+  @AllureStep(`[Petcontroller] findByStatus`)
   async findByStatus(status: string | string[]) {
     return (
       await new JsonRequest()
         .url('http://localhost/v2/pet/findByStatus')
         .searchParams(new URLSearchParams({ status }))
-        .send()
+        .send<operations['findPetsByStatus']['responses']['200']['schema']>()
     ).body;
   }
 
-  async addNew(pet: {
-    category: {
-      id: number;
-      name: string;
-    };
-    name: string;
-    photoUrls: string[];
-    tags: {
-      id: number;
-      name: string;
-    }[];
-    status: string;
-  }) {
+  @AllureStep(`[Petcontroller] addNew`)
+  async addNew(pet: Omit<definitions['Pet'], 'id'>) {
     return (
       await new JsonRequest()
         .url('http://localhost/v2/pet')
@@ -45,33 +38,24 @@ export class PetController {
         .send()
     ).body;
   }
-
+  //mocha fails with 404 for enabled @AllureStep(`[Petcontroller] delete`)
+  // @AllureStep(`[Petcontroller] delete`)
   async delete(id: number | string) {
     return (
-      await new JsonRequest().url(`http://localhost/v2/pet/${id}`).method('DELETE').send()
+      await new JsonRequest()
+        .url(`http://localhost/v2/pet/${id}`)
+        .method('DELETE')
+        .send<definitions['ApiResponse']>()
     ).body;
   }
-
-  async update(pet: {
-    id: number;
-    category: {
-      id: number;
-      name: string;
-    };
-    name: string;
-    photoUrls: string[];
-    tags: {
-      id: number;
-      name: string;
-    }[];
-    status: string;
-  }) {
+  @AllureStep(`[Petcontroller] update`)
+  async update(pet: definitions['Pet']) {
     return (
       await new JsonRequest()
         .url('http://localhost/v2/pet')
         .method('PUT')
         .body(pet)
-        .send()
+        .send<operations['updatePet']['responses']['400']>()
     ).body;
   }
 }

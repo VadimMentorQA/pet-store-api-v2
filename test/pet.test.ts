@@ -1,5 +1,6 @@
 import { strict as assert } from 'assert';
 import { PetController } from '../api/controller/pet.controller';
+import { definitions } from '../.temp/types';
 
 const pet = new PetController();
 
@@ -26,19 +27,19 @@ describe('User can get pet by', function () {
     body = await pet.findByStatus(['available', 'sold', 'pending']);
 
     assert(body.length > 0);
-    assert(body.some((pet: any) => pet.status == 'available'));
-    assert(body.some((pet: any) => pet.status == 'pending'));
+    assert(body.some((pet) => pet.status == 'available'));
+    assert(body.some((pet) => pet.status == 'pending'));
   });
 
   it('tag', async function () {
     const body = await pet.findByTags('tag1');
 
     assert(body.length > 0);
-    assert(body.every((pet: any) => pet.tags.some((tag: any) => tag.name == 'tag1')));
+    assert(body.every((pet) => pet.tags?.some((tag) => tag.name == 'tag1')));
   });
 
   it('can be added, updated, deleted', async function () {
-    const petToCreate = {
+    const petToCreate: Omit<definitions['Pet'], 'id'> = {
       category: {
         id: 0,
         name: 'string',
@@ -77,6 +78,28 @@ describe('User can get pet by', function () {
       },
       'Expect created pet to be found'
     );
+    const newerPet: definitions['Pet'] = {
+      id: addedPet.id,
+
+      category: {
+        id: 0,
+        name: 'string',
+      },
+      name: 'Kitty',
+      photoUrls: [
+        'https://img.freepik.com/premium-photo/cute-little-puppy-happy-dog_34683-4162.jpg',
+      ],
+      tags: [
+        {
+          id: 0,
+          name: 'string',
+        },
+      ],
+      status: 'available',
+    };
+
+    const updatedPet = await pet.update(newerPet);
+    assert.deepEqual(newerPet, updatedPet, 'Expect to have updated pet');
 
     await pet.delete(addedPet.id);
   });
